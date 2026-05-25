@@ -1,0 +1,46 @@
+# Dependencies
+node_modules/
+package-lock.json
+yarn.lock
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+
+# Build files
+dist/
+build/
+.next/
+out/
+.cache/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# Testing
+.coverage
+.nyc_output
+coverage/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Local development
+.env.development
+.env.test.local
+.env.production.local
+
+# IDE specific
+*.sublime-project
+*.sublime-workspace

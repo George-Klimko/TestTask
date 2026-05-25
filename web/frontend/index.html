@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang="en" class="h-full">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Account Reset Control Panel</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            panel: '#0f172a',
+            card: '#111827',
+            muted: '#1f2937'
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="h-full bg-slate-950 text-slate-100">
+  <div class="min-h-full p-6 lg:p-8">
+    <header class="mb-6">
+      <h1 class="text-2xl lg:text-3xl font-bold">High-Level Reset Dashboard</h1>
+      <p class="text-slate-400 mt-2">FastAPI-ready frontend for configuration, control and live monitoring.</p>
+    </header>
+
+    <main class="grid grid-cols-1 xl:grid-cols-12 gap-6">
+      <section class="xl:col-span-5 space-y-6">
+        <div class="bg-card border border-slate-800 rounded-2xl p-5 shadow-lg">
+          <h2 class="text-lg font-semibold mb-4">A. Data Upload</h2>
+          <form id="uploadForm" class="space-y-4">
+            <div class="grid grid-cols-1 gap-4">
+              <div class="drop-zone rounded-xl border-2 border-dashed border-slate-700 p-4 bg-slate-900/40" data-input="accountsInput">
+                <p class="font-medium">Accounts</p>
+                <p class="text-sm text-slate-400 mb-2">mail:pass or user:mail:pass</p>
+                <input id="accountsInput" type="file" accept=".txt" class="hidden" />
+                <p class="text-xs text-slate-500">Drop .txt or click to choose</p>
+                <p class="mt-2 text-sm"><span class="text-slate-400">Loaded:</span> <span id="accountsCount">0</span></p>
+              </div>
+
+              <div class="drop-zone rounded-xl border-2 border-dashed border-slate-700 p-4 bg-slate-900/40" data-input="proxiesInput">
+                <p class="font-medium">Proxies</p>
+                <p class="text-sm text-slate-400 mb-2">ip:port:user:pass or ip:port</p>
+                <input id="proxiesInput" type="file" accept=".txt" class="hidden" />
+                <p class="text-xs text-slate-500">Drop .txt or click to choose</p>
+                <p class="mt-2 text-sm"><span class="text-slate-400">Valid lines:</span> <span id="proxiesCount">0</span></p>
+              </div>
+
+              <div class="drop-zone rounded-xl border-2 border-dashed border-slate-700 p-4 bg-slate-900/40" data-input="emailsInput">
+                <p class="font-medium">Target Emails</p>
+                <p class="text-sm text-slate-400 mb-2">new_mail:new_mail_pass</p>
+                <input id="emailsInput" type="file" accept=".txt" class="hidden" />
+                <p class="text-xs text-slate-500">Drop .txt or click to choose</p>
+                <p class="mt-2 text-sm"><span class="text-slate-400">Pool size:</span> <span id="emailsCount">0</span></p>
+              </div>
+            </div>
+          </form>
+        </div>
+
+        <div class="bg-card border border-slate-800 rounded-2xl p-5 shadow-lg">
+          <h2 class="text-lg font-semibold mb-4">B. Configuration</h2>
+          <div class="space-y-4">
+            <label class="block">
+              <div class="flex items-center justify-between mb-1">
+                <span class="text-sm">Threads</span>
+                <span id="threadsValue" class="text-sm text-cyan-400">20</span>
+              </div>
+              <input id="threads" type="range" min="1" max="100" value="20" class="w-full" />
+            </label>
+
+            <label class="block">
+              <span class="text-sm">Timeout (seconds)</span>
+              <input id="timeout" type="number" min="1" value="45" class="mt-1 w-full rounded-lg bg-slate-900 border border-slate-700 px-3 py-2" />
+            </label>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <label class="flex items-center justify-between rounded-lg border border-slate-700 px-3 py-2 bg-slate-900">
+                <span class="text-sm">Headless mode</span>
+                <input id="headless" type="checkbox" class="h-4 w-4" checked />
+              </label>
+
+              <label class="flex items-center justify-between rounded-lg border border-slate-700 px-3 py-2 bg-slate-900">
+                <span class="text-sm">MX Lookup</span>
+                <input id="mxLookup" type="checkbox" class="h-4 w-4" checked />
+              </label>
+            </div>
+
+            <label class="block">
+              <span class="text-sm">Telegram Bot Token</span>
+              <input id="botToken" type="text" placeholder="123456:ABC..." class="mt-1 w-full rounded-lg bg-slate-900 border border-slate-700 px-3 py-2" />
+            </label>
+
+            <label class="block">
+              <span class="text-sm">Telegram Chat ID</span>
+              <input id="chatId" type="text" placeholder="-100..." class="mt-1 w-full rounded-lg bg-slate-900 border border-slate-700 px-3 py-2" />
+            </label>
+
+            <div class="flex flex-wrap gap-2 pt-2">
+              <button id="startBtn" class="bg-cyan-600 hover:bg-cyan-500 px-4 py-2 rounded-lg font-medium" type="button">Initialize Threads</button>
+              <button id="pauseBtn" class="bg-amber-600 hover:bg-amber-500 px-4 py-2 rounded-lg font-medium" type="button">Pause</button>
+              <button id="stopBtn" class="bg-rose-600 hover:bg-rose-500 px-4 py-2 rounded-lg font-medium" type="button">Stop</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="xl:col-span-7 space-y-6">
+        <div class="bg-card border border-slate-800 rounded-2xl p-5 shadow-lg">
+          <h2 class="text-lg font-semibold mb-3">C. Live Monitoring</h2>
+          <div class="mb-3">
+            <div class="flex justify-between text-sm mb-1"><span>Progress</span><span id="progressLabel">0%</span></div>
+            <div class="h-3 w-full rounded-full bg-slate-800 overflow-hidden">
+              <div id="progressBar" class="h-full w-0 bg-gradient-to-r from-cyan-500 to-emerald-500"></div>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
+            <div class="rounded-xl p-4 bg-emerald-950 border border-emerald-800">
+              <p class="text-xs text-emerald-300">SUCCESS</p><p id="successCount" class="text-2xl font-bold">0</p>
+            </div>
+            <div class="rounded-xl p-4 bg-amber-950 border border-amber-800">
+              <p class="text-xs text-amber-300">2FA (SMS)</p><p id="smsCount" class="text-2xl font-bold">0</p>
+            </div>
+            <div class="rounded-xl p-4 bg-rose-950 border border-rose-800">
+              <p class="text-xs text-rose-300">ERROR</p><p id="errorCount" class="text-2xl font-bold">0</p>
+            </div>
+          </div>
+
+          <div>
+            <p class="text-sm mb-2">Live Log</p>
+            <div id="liveLog" class="h-48 overflow-auto rounded-xl border border-slate-800 bg-black/60 p-3 font-mono text-xs text-emerald-300"></div>
+          </div>
+        </div>
+
+        <div class="bg-card border border-slate-800 rounded-2xl p-5 shadow-lg">
+          <div class="flex items-center justify-between mb-3">
+            <h3 class="text-lg font-semibold">Output Results</h3>
+            <div class="text-xs text-slate-400">Auto-updated</div>
+          </div>
+          <div class="overflow-auto">
+            <table class="min-w-full text-sm">
+              <thead class="text-left text-slate-400 border-b border-slate-800">
+                <tr>
+                  <th class="py-2 pr-4">Account</th>
+                  <th class="py-2 pr-4">Stats</th>
+                  <th class="py-2 pr-4">Screenshot</th>
+                  <th class="py-2 pr-4">Result</th>
+                  <th class="py-2">Action</th>
+                </tr>
+              </thead>
+              <tbody id="resultsBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+  <script src="app.js"></script>
+</body>
+</html>
