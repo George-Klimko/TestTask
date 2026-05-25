@@ -1,3 +1,4 @@
+# web/app/services/job_manager.py
 import asyncio
 import itertools
 import traceback
@@ -29,10 +30,7 @@ class JobManager:
         self._jobs: dict[str, JobState] = {}
         self._queues: dict[str, asyncio.Queue] = {}
         self._tasks: dict[str, asyncio.Task] = {}
-
-        # pause only blocks NEW starts
         self._pause_gate: dict[str, asyncio.Event] = {}
-        # stop = immediate cancel
         self._stop_flag: dict[str, asyncio.Event] = {}
 
     def queue(self, job_id: str) -> asyncio.Queue:
@@ -61,7 +59,7 @@ class JobManager:
         self._jobs[job_id] = state
         self._queues[job_id] = asyncio.Queue()
         self._pause_gate[job_id] = asyncio.Event()
-        self._pause_gate[job_id].set()  # not paused
+        self._pause_gate[job_id].set()
         self._stop_flag[job_id] = asyncio.Event()
 
         t = asyncio.create_task(
@@ -120,14 +118,14 @@ class JobManager:
         sem = asyncio.Semaphore(threads)
         proxy_cycle = itertools.cycle(proxies) if proxies else iter([])
 
+        # ONE browser for whole job
+        browser = None
+
         async def handle(account_line: str):
-            browser = None
             async with sem:
                 await self._log(job_id, f"[worker] enter account={account_line}")
 
-                # pause blocks only NEW task entry
                 await self._pause_gate[job_id].wait()
-
                 if self._stop_flag[job_id].is_set():
                     await self._log(job_id, f"[worker] stopped_before_start account={account_line}")
                     return
@@ -140,10 +138,7 @@ class JobManager:
                     await self._log(job_id, f"[worker] proxy_selected account={account_line} proxy={proxy_line}")
                     px = parse_proxy(proxy_line) if proxy_line else None
 
-                    await self._log(job_id, f"[worker] start_browser account={account_line}")
-                    browser = await start_browser(headless=headless)
-                    await self._log(job_id, f"[worker] browser_started account={account_line}")
-
+                    # run_ip_check creates its own context per account
                     await self._log(job_id, f"[worker] ip_check_start account={account_line}")
                     result = await run_ip_check(
                         browser=browser,
@@ -171,9 +166,6 @@ class JobManager:
                     await self._log(job_id, f"[worker][error] account={account_line} err={e}")
                     await self._log(job_id, traceback.format_exc())
                 finally:
-                    await self._log(job_id, f"[worker] closing_browser account={account_line}")
-                    await safe_close_browser(browser)
-
                     st.done += 1
                     st.progress_pct = int((st.done / max(st.total, 1)) * 100)
                     await self.emit(job_id, {
@@ -187,7 +179,12 @@ class JobManager:
                     )
 
         try:
+            await self._log(job_id, "[manager] starting_shared_browser")
+            browser = await start_browser(headless=headless)
+            await self._log(job_id, "[manager] shared_browser_started")
+
             await asyncio.gather(*(handle(a) for a in accounts))
+
             if st.status != "stopped":
                 st.status = "done"
                 await self._log(job_id, f"[manager] job_done id={job_id}")
@@ -199,6 +196,10 @@ class JobManager:
             await self._log(job_id, f"[manager] job_failed id={job_id}")
             await self._log(job_id, traceback.format_exc())
         finally:
+            await self._log(job_id, "[manager] closing_shared_browser")
+            await safe_close_browser(browser)
+            await self._log(job_id, "[manager] shared_browser_closed")
+
             await self.emit(job_id, {"type": "job_finished", "payload": st.__dict__})
             await self._log(job_id, f"[manager] job_finished id={job_id} status={st.status}")
 

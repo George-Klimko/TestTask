@@ -8,7 +8,7 @@ import ssl
 import socket
 from contextlib import contextmanager
 from urllib.parse import urlparse
-import socks  # pip install pysocks
+
 DB_PATH = "/home/raw/prosch/web/app/imapdatabase.db"
 VALIDS_PATH = "/home/raw/prosch/web/app/valids.txt"
 
@@ -80,7 +80,10 @@ def proxy_socket(proxy_url: str | None):
         yield
         return
 
-
+    try:
+        import socks  # pip install pysocks
+    except ImportError as e:
+        raise RuntimeError("Нужен PySocks: pip install pysocks") from e
 
     cfg = parse_proxy_url(proxy_url)
     scheme_map = {
