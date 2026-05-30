@@ -32,7 +32,7 @@
           <h2 class="text-lg font-semibold mb-4">A. Data Upload</h2>
           <form id="uploadForm" class="space-y-4">
             <div class="grid grid-cols-1 gap-4">
-              <div class="drop-zone rounded-xl border-2 border-dashed border-slate-700 p-4 bg-slate-900/40" data-input="accountsInput">
+              <div class="drop-zone rounded-xl border-2 border-dashed border-slate-700 p-4 bg-slate-900/40 cursor-pointer" data-input="accountsInput">
                 <p class="font-medium">Accounts</p>
                 <p class="text-sm text-slate-400 mb-2">mail:pass or user:mail:pass</p>
                 <input id="accountsInput" type="file" accept=".txt" class="hidden" />
@@ -40,7 +40,7 @@
                 <p class="mt-2 text-sm"><span class="text-slate-400">Loaded:</span> <span id="accountsCount">0</span></p>
               </div>
 
-              <div class="drop-zone rounded-xl border-2 border-dashed border-slate-700 p-4 bg-slate-900/40" data-input="proxiesInput">
+              <div class="drop-zone rounded-xl border-2 border-dashed border-slate-700 p-4 bg-slate-900/40 cursor-pointer" data-input="proxiesInput">
                 <p class="font-medium">Proxies</p>
                 <p class="text-sm text-slate-400 mb-2">ip:port:user:pass or ip:port</p>
                 <input id="proxiesInput" type="file" accept=".txt" class="hidden" />
@@ -48,7 +48,7 @@
                 <p class="mt-2 text-sm"><span class="text-slate-400">Valid lines:</span> <span id="proxiesCount">0</span></p>
               </div>
 
-              <div class="drop-zone rounded-xl border-2 border-dashed border-slate-700 p-4 bg-slate-900/40" data-input="emailsInput">
+              <div class="drop-zone rounded-xl border-2 border-dashed border-slate-700 p-4 bg-slate-900/40 cursor-pointer" data-input="emailsInput">
                 <p class="font-medium">Target Emails</p>
                 <p class="text-sm text-slate-400 mb-2">new_mail:new_mail_pass</p>
                 <input id="emailsInput" type="file" accept=".txt" class="hidden" />
@@ -72,7 +72,7 @@
 
             <label class="block">
               <span class="text-sm">Timeout (seconds)</span>
-              <input id="timeout" type="number" min="1" value="45" class="mt-1 w-full rounded-lg bg-slate-900 border border-slate-700 px-3 py-2" />
+              <input id="timeout" type="number" min="1" value="45" class="mt-1 w-full rounded-lg bg-slate-900 border border-slate-700 px-3 py-2 text-slate-100" />
             </label>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -89,18 +89,18 @@
 
             <label class="block">
               <span class="text-sm">Telegram Bot Token</span>
-              <input id="botToken" type="text" placeholder="123456:ABC..." class="mt-1 w-full rounded-lg bg-slate-900 border border-slate-700 px-3 py-2" />
+              <input id="botToken" type="text" placeholder="123456:ABC..." class="mt-1 w-full rounded-lg bg-slate-900 border border-slate-700 px-3 py-2 text-slate-100" />
             </label>
 
             <label class="block">
               <span class="text-sm">Telegram Chat ID</span>
-              <input id="chatId" type="text" placeholder="-100..." class="mt-1 w-full rounded-lg bg-slate-900 border border-slate-700 px-3 py-2" />
+              <input id="chatId" type="text" placeholder="-100..." class="mt-1 w-full rounded-lg bg-slate-900 border border-slate-700 px-3 py-2 text-slate-100" />
             </label>
 
             <div class="flex flex-wrap gap-2 pt-2">
-              <button id="startBtn" class="bg-cyan-600 hover:bg-cyan-500 px-4 py-2 rounded-lg font-medium" type="button">Initialize Threads</button>
-              <button id="pauseBtn" class="bg-amber-600 hover:bg-amber-500 px-4 py-2 rounded-lg font-medium" type="button">Pause</button>
-              <button id="stopBtn" class="bg-rose-600 hover:bg-rose-500 px-4 py-2 rounded-lg font-medium" type="button">Stop</button>
+              <button id="startBtn" class="bg-cyan-600 hover:bg-cyan-500 px-4 py-2 rounded-lg font-medium transition-colors" type="button">Initialize Threads</button>
+              <button id="pauseBtn" class="bg-amber-600 hover:bg-amber-500 px-4 py-2 rounded-lg font-medium transition-colors" type="button">Pause</button>
+              <button id="stopBtn" class="bg-rose-600 hover:bg-rose-500 px-4 py-2 rounded-lg font-medium transition-colors" type="button">Stop</button>
             </div>
           </div>
         </div>
@@ -117,42 +117,61 @@
           </div>
 
           <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
-            <div class="rounded-xl p-4 bg-emerald-950 border border-emerald-800">
-              <p class="text-xs text-emerald-300">SUCCESS</p><p id="successCount" class="text-2xl font-bold">0</p>
+            <div class="rounded-xl p-4 bg-emerald-950/60 border border-emerald-800">
+              <p class="text-xs text-emerald-300">SUCCESS</p><p id="successCount" class="text-2xl font-bold text-emerald-400">0</p>
             </div>
-            <div class="rounded-xl p-4 bg-amber-950 border border-amber-800">
-              <p class="text-xs text-amber-300">2FA (SMS)</p><p id="smsCount" class="text-2xl font-bold">0</p>
+            <div class="rounded-xl p-4 bg-amber-950/60 border border-amber-800">
+              <p class="text-xs text-amber-300">2FA (SMS)</p><p id="smsCount" class="text-2xl font-bold text-amber-400">0</p>
             </div>
-            <div class="rounded-xl p-4 bg-rose-950 border border-rose-800">
-              <p class="text-xs text-rose-300">ERROR</p><p id="errorCount" class="text-2xl font-bold">0</p>
+            <div class="rounded-xl p-4 bg-rose-950/60 border border-rose-800">
+              <p class="text-xs text-rose-300">ERROR / BANNED</p><p id="errorCount" class="text-2xl font-bold text-rose-400">0</p>
             </div>
           </div>
 
           <div>
             <p class="text-sm mb-2">Live Log</p>
-            <div id="liveLog" class="h-48 overflow-auto rounded-xl border border-slate-800 bg-black/60 p-3 font-mono text-xs text-emerald-300"></div>
+            <div id="liveLog" class="h-40 overflow-auto rounded-xl border border-slate-800 bg-black/60 p-3 font-mono text-xs text-emerald-300"></div>
           </div>
         </div>
 
-        <div class="bg-card border border-slate-800 rounded-2xl p-5 shadow-lg">
-          <div class="flex items-center justify-between mb-3">
-            <h3 class="text-lg font-semibold">Output Results</h3>
-            <div class="text-xs text-slate-400">Auto-updated</div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          
+          <div class="bg-card border border-emerald-900/40 rounded-2xl p-5 shadow-lg">
+            <div class="flex items-center justify-between mb-3">
+              <h3 class="text-base font-semibold text-emerald-400">Valid Accounts</h3>
+              <div class="text-[11px] text-slate-400">Почта:ПассПочты:ПассПошмарк</div>
+            </div>
+            <div class="overflow-auto max-h-80 min-h-[200px]">
+              <table class="min-w-full text-sm">
+                <thead class="text-left text-slate-400 border-b border-slate-800">
+                  <tr>
+                    <th class="py-2 pr-2 text-xs">Комбо строка</th>
+                    <th class="py-2 w-16 text-right text-xs">Действие</th>
+                  </tr>
+                </thead>
+                <tbody id="validResultsBody"></tbody>
+              </table>
+            </div>
           </div>
-          <div class="overflow-auto">
-            <table class="min-w-full text-sm">
-              <thead class="text-left text-slate-400 border-b border-slate-800">
-                <tr>
-                  <th class="py-2 pr-4">Account</th>
-                  <th class="py-2 pr-4">Stats</th>
-                  <th class="py-2 pr-4">Screenshot</th>
-                  <th class="py-2 pr-4">Result</th>
-                  <th class="py-2">Action</th>
-                </tr>
-              </thead>
-              <tbody id="resultsBody"></tbody>
-            </table>
+
+          <div class="bg-card border border-rose-900/40 rounded-2xl p-5 shadow-lg">
+            <div class="flex items-center justify-between mb-3">
+              <h3 class="text-base font-semibold text-rose-400">Errors & Bans</h3>
+              <div class="text-[11px] text-slate-400">Лог критических сбоев IP</div>
+            </div>
+            <div class="overflow-auto max-h-80 min-h-[200px]">
+              <table class="min-w-full text-sm">
+                <thead class="text-left text-slate-400 border-b border-slate-800">
+                  <tr>
+                    <th class="py-2 pr-4 text-xs">Аккаунт / Прокси</th>
+                    <th class="py-2 text-xs">Описание ошибки</th>
+                  </tr>
+                </thead>
+                <tbody id="errorResultsBody"></tbody>
+              </table>
+            </div>
           </div>
+
         </div>
       </section>
     </main>

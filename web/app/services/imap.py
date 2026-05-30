@@ -217,8 +217,9 @@ def connect_imap(email_addr: str, password: str, proxy_url: str | None = None):
                     mail.starttls(ssl_context=context)
                 except Exception:
                     pass
-
+        
         mail.login(email_addr, password)
+        print(f"  ✅ IMAP LOGIN SUCCESS: {email_addr}")
         return {"success": True, "mail": mail, "error": None, "message": "LOGIN_SUCCESS"}
 
     except imaplib.IMAP4.error as e:
@@ -387,14 +388,37 @@ def extract_verification_code_from_email(raw_bytes: bytes) -> str | None:
     # Возвращаем первый найденный (обычно он один)
     return candidates[0]
 
-def find_emails(mail, keywords: list):
+
+
+
+
+import time
+
+def find_emails(mail, keywords: list, timeout: int = 90, interval: int = 5):
+    deadline = time.time() + timeout
+
+    while time.time() < deadline:
+        result = _find_emails_sync(mail, keywords)
+        if result:
+            return result
+        remaining = int(deadline - time.time())
+        if remaining <= 0:
+            break
+        print(f"  ⏳ Письмо не найдено, жду {interval}с... (осталось ~{remaining}с)")
+        time.sleep(interval)
+
+    print("  ❌ Письмо не пришло за отведённое время")
+    return None
+
+
+def _find_emails_sync(mail, keywords: list):
     try:
         status, folder_list = mail.list()
         if status != "OK" or not folder_list:
             return None
-        
+
         today = datetime.now(timezone.utc).date()
-        
+
         for f in folder_list:
             try:
                 if not f:
@@ -404,20 +428,21 @@ def find_emails(mail, keywords: list):
                     continue
                 if folder_name.startswith("\\") or folder_name in ("NIL", ""):
                     continue
-                
+
                 safe_name = folder_name.replace("\\", "\\\\").replace('"', '\\"')
                 select_name = f'"{safe_name}"'
                 res, _ = mail.select(select_name, readonly=True)
                 if res != "OK":
                     continue
-                
+
                 status, data = mail.search(None, "ALL")
                 if status != "OK" or not data or not data[0]:
                     continue
+
                 ids = data[0].split()
                 if not ids:
                     continue
-                
+
                 for msg_id in reversed(ids):
                     try:
                         status, hdr_data = mail.fetch(
@@ -426,22 +451,19 @@ def find_emails(mail, keywords: list):
                         )
                         if status != "OK" or not hdr_data or not hdr_data[0]:
                             continue
+
                         raw_headers = hdr_data[0][1]
                         if not raw_headers:
                             continue
-                        
+
                         msg = email.message_from_bytes(raw_headers)
                         from_val    = decode_mime(msg.get("From", "")).lower()
                         subject_val = decode_mime(msg.get("Subject", "")).lower()
-                        
-                        matched = any(
-                            kw.lower() in from_val or kw.lower() in subject_val
-                            for kw in keywords
-                        )
+
+                        matched = any(w.lower() in from_val or w.lower() in subject_val for w in keywords)
                         if not matched:
                             continue
-                        
-                        # Проверка даты — только сегодня
+
                         date_raw = msg.get("Date")
                         if not date_raw:
                             continue
@@ -453,35 +475,30 @@ def find_emails(mail, keywords: list):
                                 continue
                         except Exception:
                             continue
-                        
-                        # Загружаем полное письмо
+
                         status, full_data = mail.fetch(msg_id, "(RFC822)")
                         if status != "OK" or not full_data or not full_data[0]:
                             continue
                         raw_email = full_data[0][1]
                         if not raw_email:
                             continue
-                        
-                        # Ищем ссылку сброса пароля
+
                         links = extract_links_from_email(raw_email)
-                        if links:
-                            print(f"  🔗 Reset link: {links[0]}")
-                            return {"type": "reset_link", "value": links[0]}
-                        
-                        # Ищем код верификации
-                        code = extract_verification_code_from_email(raw_email)
-                        if code:
-                            print(f"  🔑 Verification code: {code}")
-                            return {"type": "verification_code", "value": code}
-                        
+                        if not links:
+                            continue
+
+                        print(f"  🔗 {links[0]}")
+                        return links[0]
+
                     except Exception:
                         continue
             except Exception:
                 continue
-        
+
         return None
     except Exception:
         return None
+
     
 def fetch_and_print_msg(mail, msg_id):
     status, data = mail.fetch(msg_id, "(RFC822)")
@@ -537,5 +554,5 @@ if __name__ == "__main__":
     # PROXY_URL = "107.174.114.18:13757:user:pass"
     # PROXY_URL = "socks5://user:pass@107.174.114.18:13757"
     PROXY_URL = "107.174.114.18:13757:DZssMHS2IXIO7MzL:DZssMHS2IXIO7MzL"
-
+    #168.0.215.198:9246:620usZ:G1FoMX
     process_accounts_from_file(ACCOUNTS_FILE, SEARCH_KEYWORDS, proxy_url=PROXY_URL)
