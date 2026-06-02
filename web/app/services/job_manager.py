@@ -3,7 +3,7 @@ import itertools
 import traceback
 import uuid
 from dataclasses import dataclass
-
+from app.services.email_pool import email_pool
 from app.services.browser_runner import (
     parse_account,
     parse_proxy,
@@ -239,6 +239,7 @@ class JobManager:
                         browser=browser,
                         account=acc,
                         proxy=px,
+                        email_pool=email_pool,
                         timeout_sec=timeout_sec,
                     )
 

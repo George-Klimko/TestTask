@@ -4,7 +4,7 @@ from app.config import settings
 from app.core.validator import validate_accounts, validate_emails, validate_proxies
 from app.models.upload import UploadResult
 from app.services.storage import storage
-
+from app.services.email_pool import email_pool
 router = APIRouter(prefix='/upload', tags=['upload'])
 MAX_BYTES = settings.max_file_size_mb * 1024 * 1024
 
@@ -38,10 +38,21 @@ async def upload_proxies(file: UploadFile = File(...), x_user_id: str | None = H
     storage.for_user(_uid(x_user_id)).proxies = valid
     return UploadResult(total=len(lines), valid=len(valid), invalid=len(invalid), preview=valid[:3])
 
-
 @router.post('/emails', response_model=UploadResult)
-async def upload_emails(file: UploadFile = File(...), x_user_id: str | None = Header(default=None)) -> UploadResult:
+async def upload_emails(
+    file: UploadFile = File(...),
+    x_user_id: str | None = Header(default=None)
+) -> UploadResult:
     lines = await read_lines(file)
     valid, invalid = validate_emails(lines)
     storage.for_user(_uid(x_user_id)).emails = valid
-    return UploadResult(total=len(lines), valid=len(valid), invalid=len(invalid), preview=valid[:3])
+
+    # ✅ загружаем в пул
+    email_pool.load(valid)
+
+    return UploadResult(
+        total=len(lines),
+        valid=len(valid),
+        invalid=len(invalid),
+        preview=valid[:3]
+    )
